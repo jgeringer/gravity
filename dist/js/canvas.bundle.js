@@ -36,32 +36,17 @@
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
 /******/ 		}
 /******/ 	};
 /******/
 /******/ 	// define __esModule on exports
 /******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
 /******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -115,6 +100,9 @@ var mouse = {
 
 var colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66'];
 
+var gravity = 1;
+var friction = 0.98;
+
 // Event Listeners
 addEventListener('mousemove', function (event) {
     mouse.x = event.clientX;
@@ -128,45 +116,72 @@ addEventListener('resize', function () {
     init();
 });
 
+addEventListener("click", function () {
+    init();
+});
+
 // Objects
-function Object(x, y, radius, color) {
+function Ball(x, y, dx, dy, radius, color) {
     this.x = x;
     this.y = y;
+    this.dx = dx;
+    this.dy = dy;
     this.radius = radius;
     this.color = color;
 }
 
-Object.prototype.draw = function () {
+Ball.prototype.draw = function () {
     c.beginPath();
     c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
     c.fillStyle = this.color;
     c.fill();
+    c.stroke();
     c.closePath();
 };
 
-Object.prototype.update = function () {
+Ball.prototype.update = function () {
+    if (this.y + this.radius + this.dy > canvas.height) {
+        this.dy = -this.dy * friction;
+    } else {
+        this.dy += gravity;
+    }
+
+    if (this.x + this.radius + this.dx > canvas.width || this.x - this.radius < 0) {
+        this.dx = -this.dx;
+    }
+
+    this.x += this.dx;
+    this.y += this.dy;
     this.draw();
 };
 
 // Implementation
-var objects = void 0;
-function init() {
-    objects = [];
+var ball;
+var ballArray = [];
 
+function init() {
+    ballArray = [];
     for (var i = 0; i < 400; i++) {
-        // objects.push();
+        var radius = _utils2.default.randomIntFromRange(8, 20);
+        var x = _utils2.default.randomIntFromRange(radius, canvas.width - radius);
+        var y = _utils2.default.randomIntFromRange(0, canvas.height - radius);
+        var dx = _utils2.default.randomIntFromRange(-2, 2);
+        var dy = _utils2.default.randomIntFromRange(-2, 2);
+        var color = _utils2.default.randomColor(colors);
+        ballArray.push(new Ball(x, y, dx, dy, radius, color));
     }
+    console.log(ballArray);
 }
 
 // Animation Loop
 function animate() {
     requestAnimationFrame(animate);
+
     c.clearRect(0, 0, canvas.width, canvas.height);
 
-    c.fillText('HTML CANVAS BOILERPLATE', mouse.x, mouse.y);
-    // objects.forEach(object => {
-    //  object.update();
-    // });
+    for (var i = 0; i < ballArray.length; i++) {
+        ballArray[i].update();
+    }
 }
 
 init();
